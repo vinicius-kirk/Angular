@@ -1,6 +1,8 @@
-.crop {
+.crop 
+{
   overflow: hidden;
 }
-div {
+div 
+{
   cursor: pointer;
 }
