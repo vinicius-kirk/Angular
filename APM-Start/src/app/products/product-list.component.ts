@@ -1,29 +1,29 @@
-import { listLazyRoutes } from "@angular/compiler/src/aot/lazy_routes";
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Subscription } from "rxjs";
 import { IProduct } from "./product";
 import { ProductService } from "./product.service";
 
 @Component({
-    selector:'pm-products',
-    templateUrl:'./product-list.component.html',
+    templateUrl: './product-list.component.html',
     styleUrls: ['./product-list.component.css']
 })
 
-export class ProductListComponent implements OnInit {
-    
-    
+export class ProductListComponent implements OnInit, OnDestroy {
+
+
     pageTitle = 'Product List';
     imageWidth = 50;
     imageMargin = 2;
-    showImage : boolean = false;
-    productServices : ProductService;
+    showImage: boolean = false;
+    productServices: ProductService;
+    erroMessage: string = '';
+    sub!: Subscription;
 
-
-    private _listFilter : string = '';
-    get listFilter() : string{
+    private _listFilter: string = '';
+    get listFilter(): string {
         return this._listFilter;
     }
-    set listFilter(value:string){
+    set listFilter(value: string) {
         this._listFilter = value;
         console.log('In setter: ', value)
         this.filteredProducts = this.performFilter(value);
@@ -33,8 +33,8 @@ export class ProductListComponent implements OnInit {
     filteredProducts: IProduct[] = [];
     products: IProduct[] = [];
 
-    constructor(private _productService : ProductService){
-                this.productServices = _productService;
+    constructor(private _productService: ProductService) {
+        this.productServices = _productService;
     }
 
     toggleImage(): void {
@@ -43,19 +43,26 @@ export class ProductListComponent implements OnInit {
 
     performFilter(filterBy: string): IProduct[] {
         filterBy = filterBy.toLocaleLowerCase();
-        return this.products.filter((product:IProduct) =>
-        product.productName.toLocaleLowerCase().includes(filterBy));
+        return this.products.filter((product: IProduct) =>
+            product.productName.toLocaleLowerCase().includes(filterBy));
     }
 
-    onRatingClicked(message: string) : void{
+    onRatingClicked(message: string): void {
         this.pageTitle = 'Product List ' + message;
     }
     ngOnInit(): void {
-        
-        this.products = this.productServices.getProduct();
-        this.filteredProducts = this.products;
+
+        this.sub = this.productServices.getProduct().subscribe({
+            next: products => { this.products = products, this.filteredProducts = this.products; },
+            error: err => this.erroMessage = err
+        });
+
     }
 
-    
-} 
+    ngOnDestroy() {
+        this.sub.unsubscribe();
+    }
+
+
+}
 
